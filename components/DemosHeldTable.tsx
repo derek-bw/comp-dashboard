@@ -24,6 +24,12 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
+const OUTCOME_ORDER: Record<DemoDetail['demoOutcome'], number> = {
+  'Held': 0,
+  'Rescheduled': 1,
+  'No Show': 2,
+};
+
 function OutcomeBadge({ outcome }: { outcome: DemoDetail['demoOutcome'] }) {
   const styles: Record<DemoDetail['demoOutcome'], string> = {
     'Held':        'bg-green-100 text-green-700',
@@ -40,6 +46,13 @@ function OutcomeBadge({ outcome }: { outcome: DemoDetail['demoOutcome'] }) {
 export default function DemosHeldTable({ demos, selectedMonth, selectedRep }: DemosHeldTableProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const sortedDemos = useMemo(() => [...demos].sort((a, b) => {
+    const dateA = new Date(a.demoDate).getTime();
+    const dateB = new Date(b.demoDate).getTime();
+    if (dateB !== dateA) return dateB - dateA;
+    return (OUTCOME_ORDER[a.demoOutcome] ?? 3) - (OUTCOME_ORDER[b.demoOutcome] ?? 3);
+  }), [demos]);
+
   const heldCount = useMemo(() => demos.filter((d) => d.demoOutcome === 'Held').length, [demos]);
   const convertedCount = useMemo(() => demos.filter((d) => d.convertedToObe).length, [demos]);
   const conversionRate = heldCount > 0 ? Math.round((convertedCount / heldCount) * 100) : 0;
@@ -51,7 +64,7 @@ export default function DemosHeldTable({ demos, selectedMonth, selectedRep }: De
 
   function handleExport() {
     const headers = ['School Name', 'Demo Date', 'Outcome', 'Converted to OBE', 'SaaS OBE Month', 'Notes'];
-    const rows = demos.map((d) => [
+    const rows = sortedDemos.map((d) => [
       d.schoolName,
       d.demoDate,
       d.demoOutcome,
@@ -106,14 +119,14 @@ export default function DemosHeldTable({ demos, selectedMonth, selectedRep }: De
                   <thead>
                     <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">School</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Demo Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Demo Date ↓</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Outcome</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Converted to OBE</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">SaaS OBE Month</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F1F5F9]">
-                    {demos.map((demo, i) => (
+                    {sortedDemos.map((demo, i) => (
                       <tr key={i} className="hover:bg-[#F8FAFC] transition-colors">
                         <td className="px-4 py-3 font-medium text-[#0F172A]">{demo.schoolName || '—'}</td>
                         <td className="px-4 py-3 text-slate-600">{demo.demoDate || '—'}</td>
