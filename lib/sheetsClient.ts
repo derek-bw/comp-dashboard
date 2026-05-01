@@ -54,19 +54,35 @@ function parseDecimalPct(val: string | undefined): number {
 }
 
 /**
- * Normalises date strings from Google Sheets.
- * Sheets sometimes serialises dates with 2-digit years (e.g. "2/1/26") and sometimes
- * with 4-digit years ("2/1/2026"). We always want 4-digit years so that string
- * comparisons between tabs (deals vs summary) work correctly.
+ * Normalises date values from Google Sheets into M/D/YYYY strings.
+ * Handles three cases:
+ *   1. Serial numbers (e.g. 44958) — Sheets returns Date-typed cells as numbers
+ *   2. 2-digit year strings (e.g. "2/1/26") — normalised to "2/1/2026"
+ *   3. Already-normalised strings (e.g. "2/1/2026") — returned unchanged
  */
 function normalizeDate(raw: string): string {
-  if (!raw) return raw;
-  // Match M/D/YY where YY is exactly 2 digits (i.e. not already 4-digit)
-  const match = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
-  if (!match) return raw; // already 4-digit year or unrecognised format — leave alone
-  const [, m, d, yy] = match;
-  const year = parseInt(yy, 10) >= 50 ? `19${yy}` : `20${yy}`;
-  return `${m}/${d}/${year}`;
+  if (!raw || raw === '-') return raw;
+
+  // Handle Sheets date serial numbers (e.g. 44958 = 2/1/2026)
+  const serial = Number(raw);
+  if (!isNaN(serial) && serial > 40000 && serial < 50000) {
+    // Excel/Sheets epoch is Dec 30, 1899
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    const m = date.getUTCMonth() + 1;
+    const d = date.getUTCDate();
+    const y = date.getUTCFullYear();
+    return `${m}/${d}/${y}`;
+  }
+
+  // Handle 2-digit year strings (e.g. "2/1/26" → "2/1/2026")
+  const parts = raw.split('/');
+  if (parts.length === 3 && parts[2].length === 2) {
+    const year = parseInt(parts[2]);
+    parts[2] = (year >= 50 ? '19' : '20') + parts[2];
+    return parts.join('/');
+  }
+
+  return raw;
 }
 
 // ─── Header-map helpers ───────────────────────────────────────────────────────
