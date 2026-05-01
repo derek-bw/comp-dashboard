@@ -97,15 +97,28 @@ function TeamSummaryCards({
 
 // ─── Deal Quality Row ─────────────────────────────────────────────────────────
 
-function DealQualityRow({ rollup }: { rollup: ManagerRollup }) {
+function DealQualityRow({
+  rollup,
+  teamAvgMrrPerDeal,
+  teamBillingAttachPct,
+  teamAvgDiscountPct,
+  teamPrepayPct,
+}: {
+  rollup: ManagerRollup;
+  /** Calculated live from App_Deal_Detail */
+  teamAvgMrrPerDeal: number;
+  teamBillingAttachPct: number;
+  teamAvgDiscountPct: number;
+  teamPrepayPct: number;
+}) {
   if (rollup.channelRole?.toLowerCase().includes('sdr')) return null;
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {[
-        { label: 'Avg MRR / Deal',   value: formatCurrency(rollup.teamAvgMrrPerDeal) },
-        { label: 'Billing Attach %', value: `${rollup.teamBillingAttachPct.toFixed(1)}%` },
-        { label: 'Annual Prepay %',  value: `${rollup.teamPrepayPct.toFixed(1)}%` },
-        { label: 'Avg Discount %',   value: `${rollup.teamAvgDiscountPct.toFixed(1)}%` },
+        { label: 'Avg MRR / Deal',   value: formatCurrency(teamAvgMrrPerDeal) },
+        { label: 'Billing Attach %', value: `${teamBillingAttachPct.toFixed(1)}%` },
+        { label: 'Annual Prepay %',  value: `${teamPrepayPct.toFixed(1)}%` },
+        { label: 'Avg Discount %',   value: `${teamAvgDiscountPct.toFixed(1)}%` },
       ].map((tile) => (
         <div key={tile.label} className="bg-white border border-[#E2E8F0] rounded-lg px-5 py-4 flex flex-col gap-1">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-400">{tile.label}</p>
@@ -569,6 +582,32 @@ export default function ManagerDashboard({
     [activeClawbackReps]
   );
 
+  // Deal quality metrics — calculated live from App_Deal_Detail (not from App_Manager_Rollup)
+  const teamDeals = useMemo(
+    () => deals.filter((d) => teamRepNames.has(d.repName) && d.saasObeMonth === selectedMonth),
+    [deals, teamRepNames, selectedMonth]
+  );
+
+  const teamAvgMrrPerDeal = useMemo(() => {
+    if (teamDeals.length === 0) return 0;
+    return teamDeals.reduce((sum, d) => sum + d.mrr, 0) / teamDeals.length;
+  }, [teamDeals]);
+
+  const teamBillingAttachPct = useMemo(() => {
+    if (teamDeals.length === 0) return 0;
+    return (teamDeals.filter((d) => d.billingObeMonth !== '' && d.billingObeMonth !== '-').length / teamDeals.length) * 100;
+  }, [teamDeals]);
+
+  const teamAvgDiscountPct = useMemo(() => {
+    if (teamDeals.length === 0) return 0;
+    return teamDeals.reduce((sum, d) => sum + d.discountPct, 0) / teamDeals.length;
+  }, [teamDeals]);
+
+  const teamPrepayPct = useMemo(() => {
+    if (teamDeals.length === 0) return 0;
+    return (teamDeals.filter((d) => d.annualMonthly === 'Annual').length / teamDeals.length) * 100;
+  }, [teamDeals]);
+
   if (!rollup) {
     return (
       <div className="space-y-6">
@@ -604,7 +643,13 @@ export default function ManagerDashboard({
       />
 
       {/* A4: BNP tiles inline with deal quality */}
-      <DealQualityRow rollup={rollup} />
+      <DealQualityRow
+        rollup={rollup}
+        teamAvgMrrPerDeal={teamAvgMrrPerDeal}
+        teamBillingAttachPct={teamBillingAttachPct}
+        teamAvgDiscountPct={teamAvgDiscountPct}
+        teamPrepayPct={teamPrepayPct}
+      />
       <BnpTiles deals={deals} selectedMonth={selectedMonth} teamRepNames={teamRepNames} rollup={rollup} />
 
       {/* A9: SDR team demo stats */}

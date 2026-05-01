@@ -3,6 +3,11 @@ import { formatCurrency } from '@/lib/utils';
 
 interface DealQualityTilesProps {
   repSummary: RepSummary | null;
+  /** Calculated live from App_Deal_Detail */
+  avgMrrPerDeal: number;
+  billingAttachPct: number;
+  avgDiscountPct: number;
+  prepayPct: number;
 }
 
 interface TileProps {
@@ -23,7 +28,7 @@ function fmtPct(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-export default function DealQualityTiles({ repSummary }: DealQualityTilesProps) {
+export default function DealQualityTiles({ repSummary, avgMrrPerDeal, billingAttachPct, avgDiscountPct, prepayPct }: DealQualityTilesProps) {
   if (!repSummary) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -39,10 +44,10 @@ export default function DealQualityTiles({ repSummary }: DealQualityTilesProps) 
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <Tile label="Avg MRR / Deal"  value={formatCurrency(repSummary.avgMrrPerDeal)} />
-      <Tile label="Avg Discount"    value={fmtPct(repSummary.avgDiscountPct)} />
-      <Tile label="Billing Attach"  value={fmtPct(repSummary.billingAttachPct)} />
-      <Tile label="Annual Prepay"   value={fmtPct(repSummary.prepayPct)} />
+      <Tile label="Avg MRR / Deal"  value={formatCurrency(avgMrrPerDeal)} />
+      <Tile label="Avg Discount"    value={fmtPct(avgDiscountPct)} />
+      <Tile label="Billing Attach"  value={fmtPct(billingAttachPct)} />
+      <Tile label="Annual Prepay"   value={fmtPct(prepayPct)} />
     </div>
   );
 }

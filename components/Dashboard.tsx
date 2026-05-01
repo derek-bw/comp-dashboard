@@ -175,6 +175,34 @@ export default function Dashboard() {
     [clawbackDeals]
   );
 
+  // Deal quality metrics — calculated live from App_Deal_Detail (not from App_Rep_Summary)
+  const repDeals = useMemo(() => {
+    if (!data || !selectedRep || !selectedMonth) return [];
+    return data.deals.filter(
+      (d) => d.repName === selectedRep && d.saasObeMonth === selectedMonth
+    );
+  }, [data, selectedRep, selectedMonth]);
+
+  const avgMrrPerDeal = useMemo(() => {
+    if (repDeals.length === 0) return 0;
+    return repDeals.reduce((sum, d) => sum + d.mrr, 0) / repDeals.length;
+  }, [repDeals]);
+
+  const billingAttachPct = useMemo(() => {
+    if (repDeals.length === 0) return 0;
+    return (repDeals.filter((d) => d.billingObeMonth !== '' && d.billingObeMonth !== '-').length / repDeals.length) * 100;
+  }, [repDeals]);
+
+  const avgDiscountPct = useMemo(() => {
+    if (repDeals.length === 0) return 0;
+    return repDeals.reduce((sum, d) => sum + d.discountPct, 0) / repDeals.length;
+  }, [repDeals]);
+
+  const prepayPct = useMemo(() => {
+    if (repDeals.length === 0) return 0;
+    return (repDeals.filter((d) => d.annualMonthly === 'Annual').length / repDeals.length) * 100;
+  }, [repDeals]);
+
   // MPE data for selected rep + month
   const mpeSummary = useMemo<MPESummary | null>(() => {
     if (!data || !selectedRep || !selectedMonth) return null;
@@ -332,7 +360,13 @@ export default function Dashboard() {
 
             {/* ── AE: Deal quality tiles ────────────────────────────────── */}
             {roleConfig.showDealQualityMetrics && (
-              <DealQualityTiles repSummary={repSummary} />
+              <DealQualityTiles
+                repSummary={repSummary}
+                avgMrrPerDeal={avgMrrPerDeal}
+                billingAttachPct={billingAttachPct}
+                avgDiscountPct={avgDiscountPct}
+                prepayPct={prepayPct}
+              />
             )}
 
             {/* ── YTD earnings ──────────────────────────────────────────── */}
