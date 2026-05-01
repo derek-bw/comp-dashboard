@@ -185,7 +185,7 @@ export default function Dashboard() {
 
   const avgMrrPerDeal = useMemo(() => {
     if (repDeals.length === 0) return 0;
-    return repDeals.reduce((sum, d) => sum + d.mrr, 0) / repDeals.length;
+    return repDeals.reduce((sum, d) => sum + (parseFloat(String(d.mrr)) || 0), 0) / repDeals.length;
   }, [repDeals]);
 
   const billingAttachPct = useMemo(() => {
@@ -195,7 +195,7 @@ export default function Dashboard() {
 
   const avgDiscountPct = useMemo(() => {
     if (repDeals.length === 0) return 0;
-    return repDeals.reduce((sum, d) => sum + d.discountPct, 0) / repDeals.length;
+    return repDeals.reduce((sum, d) => sum + (parseFloat(String(d.discountPct)) || 0), 0) / repDeals.length;
   }, [repDeals]);
 
   const prepayPct = useMemo(() => {

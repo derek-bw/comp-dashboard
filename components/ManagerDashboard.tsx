@@ -590,7 +590,7 @@ export default function ManagerDashboard({
 
   const teamAvgMrrPerDeal = useMemo(() => {
     if (teamDeals.length === 0) return 0;
-    return teamDeals.reduce((sum, d) => sum + d.mrr, 0) / teamDeals.length;
+    return teamDeals.reduce((sum, d) => sum + (parseFloat(String(d.mrr)) || 0), 0) / teamDeals.length;
   }, [teamDeals]);
 
   const teamBillingAttachPct = useMemo(() => {
@@ -600,7 +600,7 @@ export default function ManagerDashboard({
 
   const teamAvgDiscountPct = useMemo(() => {
     if (teamDeals.length === 0) return 0;
-    return teamDeals.reduce((sum, d) => sum + d.discountPct, 0) / teamDeals.length;
+    return teamDeals.reduce((sum, d) => sum + (parseFloat(String(d.discountPct)) || 0), 0) / teamDeals.length;
   }, [teamDeals]);
 
   const teamPrepayPct = useMemo(() => {
