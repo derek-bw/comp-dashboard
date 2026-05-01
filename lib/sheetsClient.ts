@@ -53,6 +53,22 @@ function parseDecimalPct(val: string | undefined): number {
   return n;
 }
 
+/**
+ * Normalises date strings from Google Sheets.
+ * Sheets sometimes serialises dates with 2-digit years (e.g. "2/1/26") and sometimes
+ * with 4-digit years ("2/1/2026"). We always want 4-digit years so that string
+ * comparisons between tabs (deals vs summary) work correctly.
+ */
+function normalizeDate(raw: string): string {
+  if (!raw) return raw;
+  // Match M/D/YY where YY is exactly 2 digits (i.e. not already 4-digit)
+  const match = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if (!match) return raw; // already 4-digit year or unrecognised format — leave alone
+  const [, m, d, yy] = match;
+  const year = parseInt(yy, 10) >= 50 ? `19${yy}` : `20${yy}`;
+  return `${m}/${d}/${year}`;
+}
+
 // ─── Header-map helpers ───────────────────────────────────────────────────────
 
 function makeHeaderMap(headerRow: string[]): Record<string, number> {
@@ -117,7 +133,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, sH, 'Month') && col(row, sH, 'Rep_Name'))
     .map((row) => ({
-      month:                           col(row, sH, 'Month'),
+      month:                           normalizeDate(col(row, sH, 'Month')),
       repName:                         col(row, sH, 'Rep_Name'),
       repSfdcId:                       col(row, sH, 'Rep_SFDC_ID'),
       repEmail:                        col(row, sH, 'Rep_Email'),
@@ -165,21 +181,21 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, dH, 'Rep_Name'))
     .map((row) => ({
-      saasObeMonth:            col(row, dH, 'SaaS_OBE_Month'),
-      billingObeMonth:         col(row, dH, 'Billing_OBE_Month'),
-      saasCancelMonth:         col(row, dH, 'SaaS_Cancel_Month'),
+      saasObeMonth:            normalizeDate(col(row, dH, 'SaaS_OBE_Month')),
+      billingObeMonth:         normalizeDate(col(row, dH, 'Billing_OBE_Month')),
+      saasCancelMonth:         normalizeDate(col(row, dH, 'SaaS_Cancel_Month')),
       saasOwnerSfdcId:         col(row, dH, 'SaaS_Owner_SFDC_ID'),
       billingOwnerSfdcId:      col(row, dH, 'Billing_Owner_SFDC_ID'),
       repName:                 col(row, dH, 'Rep_Name'),
       schoolName:              col(row, dH, 'School_Name'),
-      saasCwMonth:             col(row, dH, 'SaaS_CW_Month'),
+      saasCwMonth:             normalizeDate(col(row, dH, 'SaaS_CW_Month')),
       combinedFunnelId:        col(row, dH, 'Combined_Funnel_ID'),
       status:                  col(row, dH, 'Status'),
       mrr:                     parseNum(col(row, dH, 'MRR')),
       annualMonthly:           col(row, dH, 'Annual_Monthly'),
       discountPct:             parseNum(col(row, dH, 'Discount_Pct')),
       bnpFlag:                 parseBool(col(row, dH, 'BNP_Flag')),
-      bnpOpeningDate:          col(row, dH, 'BNP_Opening_Date'),
+      bnpOpeningDate:          normalizeDate(col(row, dH, 'BNP_Opening_Date')),
       bnpSpiffAmount:          parseNum(col(row, dH, 'BNP_SPIFF_Amount')),
       teamLeadMultiplier:      parseNum(col(row, dH, 'Team_Lead_Multiplier')),
       seasonalityMultiplier:   parseNum(col(row, dH, 'Seasonality_Multiplier')),
@@ -199,7 +215,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, cH, 'Month') && col(row, cH, 'Team'))
     .map((row) => ({
-      month:                 col(row, cH, 'Month'),
+      month:                 normalizeDate(col(row, cH, 'Month')),
       team:                  col(row, cH, 'Team'),
       leadType:              col(row, cH, 'Lead_Type'),
       teamLeadMultiplier:    parseNum(col(row, cH, 'Team_Lead_Multiplier')),
@@ -216,7 +232,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, mH, 'Month') && col(row, mH, 'Rep_Name'))
     .map((row) => ({
-      month:                   col(row, mH, 'Month'),
+      month:                   normalizeDate(col(row, mH, 'Month')),
       repName:                 col(row, mH, 'Rep_Name'),
       repSfdcId:               col(row, mH, 'Rep_SFDC_ID'),
       manager:                 col(row, mH, 'Manager'),
@@ -251,7 +267,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, tH, 'Month') && col(row, tH, 'Rep_Name'))
     .map((row) => ({
-      month:                           col(row, tH, 'Month'),
+      month:                           normalizeDate(col(row, tH, 'Month')),
       managerName:                     col(row, tH, 'Manager'),
       repName:                         col(row, tH, 'Rep_Name'),
       channelRole:                     col(row, tH, 'Channel_Role'),
@@ -277,7 +293,7 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, mrH, 'Month') && col(row, mrH, 'Manager_Name'))
     .map((row) => ({
-      month:                 col(row, mrH, 'Month'),
+      month:                 normalizeDate(col(row, mrH, 'Month')),
       managerName:           col(row, mrH, 'Manager_Name'),
       secondLineManager:     col(row, mrH, 'Second_Line_Manager'),
       team:                  col(row, mrH, 'Team'),
@@ -316,14 +332,14 @@ export async function fetchSheetData(): Promise<SheetData> {
     .slice(1)
     .filter((row) => col(row, ddH, 'Demo_Month') && col(row, ddH, 'Rep_Name'))
     .map((row) => ({
-      demoMonth:      col(row, ddH, 'Demo_Month'),
+      demoMonth:      normalizeDate(col(row, ddH, 'Demo_Month')),
       repName:        col(row, ddH, 'Rep_Name'),
       repSfdcId:      col(row, ddH, 'Rep_SFDC_ID'),
       schoolName:     col(row, ddH, 'School_Name'),
-      demoDate:       col(row, ddH, 'Demo_Date'),
+      demoDate:       normalizeDate(col(row, ddH, 'Demo_Date')),
       demoOutcome:    col(row, ddH, 'Demo_Outcome') as 'Held' | 'No Show' | 'Rescheduled',
       convertedToObe: col(row, ddH, 'Converted_To_OBE').toLowerCase() === 'yes',
-      saasObeMonth:   col(row, ddH, 'SaaS_OBE_Month'),
+      saasObeMonth:   normalizeDate(col(row, ddH, 'SaaS_OBE_Month')),
       notes:          col(row, ddH, 'Notes'),
     }));
 

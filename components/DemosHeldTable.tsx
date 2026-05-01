@@ -49,8 +49,8 @@ export default function DemosHeldTable({ demos, selectedMonth, selectedRep }: De
   const sortedDemos = useMemo(() => [...demos].sort((a, b) => {
     const dateA = new Date(a.demoDate).getTime();
     const dateB = new Date(b.demoDate).getTime();
-    if (dateB !== dateA) return dateB - dateA;
-    return (OUTCOME_ORDER[a.demoOutcome] ?? 3) - (OUTCOME_ORDER[b.demoOutcome] ?? 3);
+    if (dateB !== dateA) return dateB - dateA; // descending
+    return OUTCOME_ORDER[a.demoOutcome] - OUTCOME_ORDER[b.demoOutcome];
   }), [demos]);
 
   const heldCount = useMemo(() => demos.filter((d) => d.demoOutcome === 'Held').length, [demos]);
