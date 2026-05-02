@@ -128,6 +128,7 @@ export interface TeamSummary {
   billingObeQuota: number;
   saasObeAttainment: number;
   billingObeAttainment: number;
+  demosHeldAttainment: number;
   blendedAttainment: number;
   netPayout: number;
   saasClawbacks: number;

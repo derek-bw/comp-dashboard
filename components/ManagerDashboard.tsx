@@ -185,6 +185,10 @@ function BnpTiles({
 // ─── A7: Rep Scorecard Table ──────────────────────────────────────────────────
 
 function RepScorecardTable({ reps, onRepClick }: { reps: TeamSummary[]; onRepClick: (name: string) => void }) {
+  const isSDRTeam = reps.length > 0 && reps[0].channelRole?.toUpperCase() === 'SDR';
+  const headers = isSDRTeam
+    ? ['Rep', 'Role', 'Demos Held', 'SaaS OBE', 'Blended', 'Net Payout', 'Clawbacks', 'YTD']
+    : ['Rep', 'Role', 'SaaS Attainment', 'Attainment %', 'Net Payout', 'Clawbacks', 'YTD'];
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden">
       <div className="px-6 py-4 border-b border-[#E2E8F0]">
@@ -195,8 +199,7 @@ function RepScorecardTable({ reps, onRepClick }: { reps: TeamSummary[]; onRepCli
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
             <tr>
-              {/* A7: renamed "Billing / Blended" → "Attainment %" */}
-              {['Rep', 'Role', 'SaaS Attainment', 'Attainment %', 'Net Payout', 'Clawbacks', 'YTD'].map((h) => (
+              {headers.map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">
                   {h}
                 </th>
@@ -205,16 +208,23 @@ function RepScorecardTable({ reps, onRepClick }: { reps: TeamSummary[]; onRepCli
           </thead>
           <tbody className="divide-y divide-[#F1F5F9]">
             {reps.map((rep) => {
-              const isSDR = rep.channelRole?.toUpperCase() === 'SDR';
-              // A7: AE → SaaS OBE; SDR → Blended
-              const primaryAttainment = isSDR ? rep.blendedAttainment : rep.saasObeAttainment;
               const hasClawback = rep.saasClawbacks < 0;
               return (
                 <tr key={rep.repName} className="hover:bg-[#F8FAFC] cursor-pointer transition-colors" onClick={() => onRepClick(rep.repName)}>
                   <td className="px-4 py-3 font-medium text-[#4F46E5] hover:underline">{rep.repName}</td>
                   <td className="px-4 py-3 text-slate-500">{rep.channelRole}</td>
-                  <td className="px-4 py-3"><AttainmentCell value={rep.saasObeAttainment} /></td>
-                  <td className="px-4 py-3"><AttainmentCell value={primaryAttainment} /></td>
+                  {isSDRTeam ? (
+                    <>
+                      <td className="px-4 py-3"><AttainmentCell value={rep.demosHeldAttainment} /></td>
+                      <td className="px-4 py-3"><AttainmentCell value={rep.saasObeAttainment} /></td>
+                      <td className="px-4 py-3"><AttainmentCell value={rep.blendedAttainment} /></td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-3"><AttainmentCell value={rep.saasObeAttainment} /></td>
+                      <td className="px-4 py-3"><AttainmentCell value={rep.saasObeAttainment} /></td>
+                    </>
+                  )}
                   <td className="px-4 py-3 tabular-nums text-[#0F172A] font-medium">{formatCurrency(rep.netPayout)}</td>
                   <td className="px-4 py-3 tabular-nums">
                     {hasClawback ? (

@@ -291,6 +291,7 @@ export async function fetchSheetData(): Promise<SheetData> {
       billingObeQuota:                 parseNum(col(row, tH, 'Billing_OBE_Quota')),
       saasObeAttainment:               parseAttainment(col(row, tH, 'SaaS_OBE_Attainment_Pct')),
       billingObeAttainment:            parseAttainment(col(row, tH, 'Billing_OBE_Attainment_Pct')),
+      demosHeldAttainment:             parseAttainment(col(row, tH, 'Demos_Held_Attainment_Pct')),
       blendedAttainment:               parseAttainment(col(row, tH, 'Blended_Attainment_Pct')),
       netPayout:                       parseNum(col(row, tH, 'Net_Payout')),
       saasClawbacks:                   parseNum(col(row, tH, 'SaaS_Clawbacks')),
